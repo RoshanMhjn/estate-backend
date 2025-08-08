@@ -15,6 +15,8 @@ import os
 import sys
 from decouple import config
 
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,10 +30,10 @@ sys.path.insert(0, str(BASE_DIR/ "apps"))
 SECRET_KEY = 'django-insecure-3nx#0_^oj_&r**&469y4qxha6d$pyik0+ajbz#*e5%3jfu&py!'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', cast=bool)
 
 ALLOWED_HOSTS = []
-
+SECRET_KEY = config('SECRET_KEY')
 
 # Application definition
 
@@ -68,9 +70,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-]
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS').split(',')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -85,8 +85,14 @@ REST_FRAMEWORK = {
 
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email",'password1*', 'password2*']
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
 ROOT_URLCONF = 'config.urls'
+
+AUTH_USER_MODEL = 'core.CustomUser'
 
 TEMPLATES = [
     {
@@ -106,16 +112,49 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+REST_AUTH_REGISTER_SERIALIZERS = {
+    'REGISTER_SERIALIZER': 'dj_rest_auth.registration.serializers.RegisterSerializer',
+}
+
+
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
+DB_ENGINE = config('DB_ENGFINE', default="sqlite")
+
+if DB_ENGINE == 'postgres':
+    DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('POSTGRES_DB'),
+        'USER': config('POSTGRES_USER'),
+        'PASSWORD': config('POSTGRES_PASSWORD'),
+        'HOST': config('POSTGRES_HOST'),
+        'PORT': config('POSTGRES_PORT'),
     }
 }
+
+elif DB_ENGINE == 'mysql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': config('MYSQL_DB'),
+            'USER': config('MYSQL_USER'),
+            'PASSWORD': config('MYSQL_PASSWORD'),
+            'HOST': config('MYSQL_HOST'),
+            'PORT': config('MYSQL_PORT'),
+        }
+    }
+
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': config('SQLITE_NAME', default=os.path.join(BASE_DIR, 'db.sqlite3')),
+        }
+    }
+
 
 
 # Password validation
